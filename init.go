@@ -16,6 +16,4 @@ func init() {
 	r.POST("/userMain", userMain)
 
 	http.ListenAndServe(":80", r)
-
-  sql.Register("sqlite3", &SQLiteDriver{}
 }

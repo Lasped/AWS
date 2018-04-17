@@ -1,10 +1,9 @@
 package main
 
 import (
-"html/template"
-"net/http"
+	"net/http"
 
-"github.com/julienschmidt/httprouter"
+	"github.com/julienschmidt/httprouter"
 )
 
 func login(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
@@ -20,7 +19,6 @@ func userMain(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	user := r.FormValue("user")
 	pass := r.FormValue("pass")
 
-	if
 	d := struct {
 		Usr string
 		Psw string
