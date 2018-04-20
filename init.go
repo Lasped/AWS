@@ -2,6 +2,7 @@ package main
 
 import (
 	"html/template"
+	"log"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
@@ -13,7 +14,8 @@ func init() {
 	r.GET("/", index)
 	r.GET("/login", login)
 	r.GET("/userMain", userMain)
-	r.POST("/userMain", userMain)
+	r.POST("/userMain", signup)
 
-	http.ListenAndServe(":80", r)
+	log.Fatal(http.ListenAndServe(":80", r))
+
 }
