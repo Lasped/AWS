@@ -14,5 +14,11 @@
 
 </ul>
 
+{{if .UserName}}
+<form action="/logout" method="GET">
+  <input type="submit" value="log out">
+</form>
+{{end}}
+
 </body>
 </html>
