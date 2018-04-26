@@ -4,21 +4,84 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale =1.0, maximum-scale=1.0, minimum-scale=1.0">
     <title>home</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.0/css/bulma.min.css">
+    <script defer src="https://use.fontawesome.com/releases/v5.0.7/js/all.js"></script>
+    <script type="text/javascript" src="scripts.js"></script>
 </head>
 <body>
+<script>
+  function loginModal() {
+     var element = document.getElementById("modal");
+     element.classList.toggle("modal");
+  }
+  </script>
 
-<strong>home</strong><br>
-<ul>
-  <li><a href="/">home</a></li>
-  <li><a href="/login">login</a></li>
+  <script>
+  function loginSucces() {
+     var element = document.getElementById("loginSucces");
+     element.classList.remove("modal");
+  }
+  </script>
 
-</ul>
+<nav class="navbar" role="navigation" aria-label="dropdown navigation">
+  <div class="navbar-menu">
+    <div class="navbar-start">
+      <div class="navbar-item">
+      </div>
+    </div>
+  </div>
+    <div class="navbar-end">
+          {{if not .UserName}}
+            <div class="navbar-item has-dropdown is-hoverable">
+              <a class="navbar-link">login</a>
+                <div class="navbar-dropdown is-right">
+                  <a onclick="loginModal()" class="navbar-item">login</a>
+                  <a class="navbar-item">Sign up</a>
+                </div>
+            </div>
+          {{else}}
+            <div class="navbar-item has-dropdown is-hoverable">
+              <a class="navbar-link" href="/logout">logout</a>
+            </div>
+          {{end}}
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
 
-{{if .UserName}}
-<form action="/logout" method="GET">
-  <input type="submit" value="log out">
-</form>
-{{end}}
+<section class="hero is-primary">
+    <div class="hero-body">
+      <div class="container">
+        <h1 class= "title" is-1>gatetu</h1>
+        <h2 class= "subtitle">Receivable finance solutions to africa</h1>
+      </div>
+    </div>
+</section>
+
+<div class="modal" id= "modal">
+  <div class="modal-background"></div>
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title">login</p>
+      <button class="delete" aria-label="close"></button>
+    </header>
+    <section class="modal-card-body">
+
+      <form  action="/login" method="POST">
+        <label for="usr">User name</label><br>
+          <input type="text" name="username" id="usr" placeholder="select user name"><br>
+
+        <label for="psw">Password</label><br>
+          <input type="password" name="password" id="psw" placeholder="select password"><br>
+
+        <input class="button is-success" type="submit" value="login" id="loginSucces" href="/userMain">
+      </form>
+
+    </section>
+  </div>
+</div>
+
 
 </body>
 </html>

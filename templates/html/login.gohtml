@@ -4,27 +4,52 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale =1.0, maximum-scale=1.0, minimum-scale=1.0">
     <title>Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.0/css/bulma.min.css">
+    <script defer src="https://use.fontawesome.com/releases/v5.0.7/js/all.js"></script>
 </head>
 <body>
 
-<strong>Login</strong><br>
-<ul>
-  <li><a href="/">home</a></li>
-  <li><a href="/login">about</a></li>
+<nav class="navbar" role="navigation" aria-label="dropdown navigation">
+  <div class="navbar-menu">
+    <div class="navbar-start">
+      <div class="navbar-item">
+      </div>
+    </div>
+  </div>
+    <div class="navbar-end">
+          {{if not .UserName}}
+            <div class="navbar-item has-dropdown is-hoverable">
+              <a class="navbar-link">login</a>
+                <div class="navbar-dropdown is-right">
+                  <a class="navbar-item" href="/login">login</a>
+                  <a class="navbar-item"href="/signup">Sign up</a>
+                </div>
+            </div>
+          {{else}}
+            <div class="navbar-item has-dropdown is-hoverable">
+              <a class="navbar-link" href="/logout">logout</a>
+            </div>
+          {{end}}
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
 
-</ul>
+  <section class="hero is-primary">
+      <div class="hero-body">
+        <div class="container">
+          <h1 class= "title" is-1>gatetu</h1>
+          <h2 class= "subtitle">Receivable finance solutions to africa</h1>
+        </div>
+      </div>
+  </section>
 
-<form  action="/login" method="POST">
-  <label for="usr">User name</label>
-    <input type="text" name="username" id="usr" placeholder="select user name"><br>
 
-  <label for="psw">Password</label>
-    <input type="password" name="password" id="psw" placeholder="select password"><br>
 
-  <input type="submit">
-</form>
 
-<a href="/signup">Create user</a>
+
+
 
 
 </body>
