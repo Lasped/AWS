@@ -1,33 +1,31 @@
-package main
+package controllers
 
 import (
+	"log"
 	"net/http"
 	"time"
 
-	"github.com/Lasped/go.uuid"
+	"github.com/Lasped/AWS/models"
+	uuid "github.com/Lasped/go.uuid"
 	"github.com/julienschmidt/httprouter"
 	"golang.org/x/crypto/bcrypt"
 )
 
-type user struct {
-	UserName string
-	Password []byte
-	Email    string
-	Role     string
+func UserMain(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	u := GetUser(w, r)
+
+	if AlreadyLoggedIN(w, r) {
+		err := models.Tpl.ExecuteTemplate(w, "userMain.gohtml", u)
+		HandleError(w, err)
+		return
+	} else {
+		err := models.Tpl.ExecuteTemplate(w, "login.gohtml", u)
+		HandleError(w, err)
+		return
+	}
 }
 
-type session struct {
-	un           string
-	lastActivity time.Time
-}
-
-var dbUsers = map[string]user{}       // user ID, user
-var dbSessions = map[string]session{} // session ID, user ID
-var dbSessionsCleaned time.Time
-
-const sessionLength int = 30
-
-func getUser(w http.ResponseWriter, r *http.Request) user {
+func GetUser(w http.ResponseWriter, r *http.Request) models.User {
 	//get Cookie
 	c, err := r.Cookie("session")
 	if err != nil {
@@ -37,21 +35,21 @@ func getUser(w http.ResponseWriter, r *http.Request) user {
 			Value: sID.String(),
 		}
 	}
-	c.MaxAge = sessionLength
+	c.MaxAge = models.SessionLength
 	http.SetCookie(w, c)
 
 	// if the user exist already, get user
-	var u user
-	if s, ok := dbSessions[c.Value]; ok {
-		s.lastActivity = time.Now()
-		dbSessions[c.Value] = s
-		u = dbUsers[s.un]
+	var u models.User
+	if s, ok := models.DbSessions[c.Value]; ok {
+		s.LastActivity = time.Now()
+		models.DbSessions[c.Value] = s
+		u = models.DbUsers[s.Un]
 	}
 	return u
 }
 
-func login(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	if alreadyLoggedIN(w, r) {
+func Login(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	if AlreadyLoggedIN(w, r) {
 		http.Redirect(w, r, "/userMain", http.StatusSeeOther)
 		return
 	}
@@ -60,7 +58,7 @@ func login(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		un := r.FormValue("username")
 		p := r.FormValue("password")
 		// is there a UserName
-		u, ok := dbUsers[un]
+		u, ok := models.DbUsers[un]
 		if !ok {
 			http.Error(w, "Username and/or password do not match", http.StatusForbidden)
 			return
@@ -77,41 +75,41 @@ func login(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 			Value: sID.String(),
 		}
 		http.SetCookie(w, c)
-		dbSessions[c.Value] = session{un, time.Now()}
+		models.DbSessions[c.Value] = models.Session{un, time.Now()}
 		http.Redirect(w, r, "/userMain", http.StatusSeeOther)
 		return
 	}
 
-	tpl.ExecuteTemplate(w, "login.gohtml", nil)
+	models.Tpl.ExecuteTemplate(w, "login.gohtml", nil)
 
 }
 
-func alreadyLoggedIN(w http.ResponseWriter, r *http.Request) bool {
+func AlreadyLoggedIN(w http.ResponseWriter, r *http.Request) bool {
 	c, err := r.Cookie("session")
 	if err != nil {
 		return false
 	}
-	s, ok := dbSessions[c.Value]
+	s, ok := models.DbSessions[c.Value]
 	if ok {
-		s.lastActivity = time.Now()
-		dbSessions[c.Value] = s
+		s.LastActivity = time.Now()
+		models.DbSessions[c.Value] = s
 	}
 
-	_, ok = dbUsers[s.un]
+	_, ok = models.DbUsers[s.Un]
 	// refresh session
-	c.MaxAge = sessionLength
+	c.MaxAge = models.SessionLength
 
 	http.SetCookie(w, c)
 
 	return ok
 }
 
-func signup(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	if alreadyLoggedIN(w, r) {
+func Signup(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	if AlreadyLoggedIN(w, r) {
 		http.Redirect(w, r, "/userMain", http.StatusSeeOther)
 		return
 	}
-	var u user
+	var u models.User
 
 	// process form submission
 	if r.Method == http.MethodPost {
@@ -123,7 +121,7 @@ func signup(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		rl := "admin"
 
 		//username taken?
-		if _, ok := dbUsers[un]; ok {
+		if _, ok := models.DbUsers[un]; ok {
 			http.Error(w, "Username already taken", http.StatusForbidden)
 			return
 		}
@@ -134,7 +132,7 @@ func signup(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 			Value: sID.String(),
 		}
 		http.SetCookie(w, c)
-		dbSessions[c.Value] = session{un, time.Now()}
+		models.DbSessions[c.Value] = models.Session{un, time.Now()}
 
 		// store user in dbUsers
 		bs, err := bcrypt.GenerateFromPassword([]byte(p), bcrypt.MinCost)
@@ -142,21 +140,21 @@ func signup(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 			http.Error(w, "Internal Server error", http.StatusInternalServerError)
 			return
 		}
-		u := user{un, bs, e, rl}
-		dbUsers[un] = u
+		u := models.User{un, bs, e, rl}
+		models.DbUsers[un] = u
 		//Redirect
 		http.Redirect(w, r, "/userMain", http.StatusSeeOther)
 		return
 	}
-	tpl.ExecuteTemplate(w, "signup.gohtml", u)
+	models.Tpl.ExecuteTemplate(w, "signup.gohtml", u)
 }
-func logout(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	if !alreadyLoggedIN(w, r) {
+func Logout(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	if !AlreadyLoggedIN(w, r) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 	}
 	c, _ := r.Cookie("session")
 	//delete the session
-	delete(dbSessions, c.Value)
+	delete(models.DbSessions, c.Value)
 	//remove the Cookie
 	c = &http.Cookie{
 		Name:   "session",
@@ -164,7 +162,7 @@ func logout(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		MaxAge: -1,
 	}
 	//clean up dbSessions
-	if time.Now().Sub(dbSessionsCleaned) > (time.Second * 30) {
+	if time.Now().Sub(models.DbSessionsCleaned) > (time.Second * 30) {
 		go cleanSessions()
 	}
 
@@ -174,10 +172,17 @@ func logout(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 }
 
 func cleanSessions() {
-	for k, v := range dbSessions {
-		if time.Now().Sub(v.lastActivity) > (time.Second * 30) {
-			delete(dbSessions, k)
+	for k, v := range models.DbSessions {
+		if time.Now().Sub(v.LastActivity) > (time.Second * 30) {
+			delete(models.DbSessions, k)
 		}
-		dbSessionsCleaned = time.Now()
+		models.DbSessionsCleaned = time.Now()
+	}
+}
+
+func HandleError(w http.ResponseWriter, err error) {
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Fatalln(err)
 	}
 }

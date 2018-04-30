@@ -5,38 +5,35 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/Lasped/AWS/controllers"
+	"github.com/Lasped/AWS/models"
 	"github.com/julienschmidt/httprouter"
+	"golang.org/x/crypto/bcrypt"
 )
 
-var tpl *template.Template
+func init() {
+	models.Tpl = template.Must(template.ParseGlob("templates/html/*"))
+}
 
 func main() {
+	r := httprouter.New()
+	r.GET("/", index)
+	r.GET("/login", controllers.Login)
+	r.POST("/login", controllers.Login)
+	r.POST("/signup", controllers.Signup)
+	r.GET("/signup", controllers.Signup)
+	r.GET("/userMain", controllers.UserMain)
+	r.POST("/userMain", controllers.UserMain)
+	r.GET("/logout", controllers.Logout)
 
+	bs, _ := bcrypt.GenerateFromPassword([]byte("password"), bcrypt.MinCost)
+	models.DbUsers["James"] = models.User{"James", bs, "test@test.com", "admin"}
+
+	log.Fatal(http.ListenAndServe(":80", r))
 }
 
 func index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	u := getUser(w, r)
-	err := tpl.ExecuteTemplate(w, "index.gohtml", u)
-	HandleError(w, err)
-}
-
-func userMain(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	u := getUser(w, r)
-
-	if alreadyLoggedIN(w, r) {
-		err := tpl.ExecuteTemplate(w, "userMain.gohtml", u)
-		HandleError(w, err)
-		return
-	} else {
-		err := tpl.ExecuteTemplate(w, "login.gohtml", u)
-		HandleError(w, err)
-		return
-	}
-}
-
-func HandleError(w http.ResponseWriter, err error) {
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		log.Fatalln(err)
-	}
+	u := controllers.GetUser(w, r)
+	err := models.Tpl.ExecuteTemplate(w, "index.gohtml", u)
+	controllers.HandleError(w, err)
 }
